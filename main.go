@@ -1,16 +1,15 @@
 package main
 
-
-
 import (
+	"blog/global"
+	"blog/internal/model"
 	"blog/internal/routers"
+	"blog/pkg/setting"
+	"github.com/gin-gonic/gin"
 	//"fmt"
 	"log"
 	"net/http"
 	"time"
-	"blog/pkg/setting"
-	"github.com/gin-gonic/gin"
-	"blog/global"
 )
 
 func init() {
@@ -18,19 +17,24 @@ func init() {
 	if err != nil {
 		log.Fatalf("init.setupSetting err: %v", err)
 	}
+
+	err = setupDBEngine()
+	if err != nil {
+		log.Fatalf("init.setupDBEngine err: %v", err)
+	}
 }
 
 func main() {
-		gin.SetMode(global.ServerSetting.RunMode)
-		router := routers.NewRouter()
-		s := &http.Server{
-			Addr:           ":" + global.ServerSetting.HttpPort,
-			Handler:        router,
-			ReadTimeout:    global.ServerSetting.ReadTimeout,
-			WriteTimeout:   global.ServerSetting.WriteTimeout,
-			MaxHeaderBytes: 1 << 20,
-		}
-		s.ListenAndServe()
+	gin.SetMode(global.ServerSetting.RunMode)
+	router := routers.NewRouter()
+	s := &http.Server{
+		Addr:           ":" + global.ServerSetting.HttpPort,
+		Handler:        router,
+		ReadTimeout:    global.ServerSetting.ReadTimeout,
+		WriteTimeout:   global.ServerSetting.WriteTimeout,
+		MaxHeaderBytes: 1 << 20,
+	}
+	s.ListenAndServe()
 }
 
 func setupSetting() error {
@@ -53,5 +57,14 @@ func setupSetting() error {
 
 	global.ServerSetting.ReadTimeout *= time.Second
 	global.ServerSetting.WriteTimeout *= time.Second
+	return nil
+}
+
+func setupDBEngine() error {
+	var err error
+	global.DBEngine, err = model.NewDBEngine(global.DatabaseSetting)
+	if err != nil {
+		return err
+	}
 	return nil
 }
